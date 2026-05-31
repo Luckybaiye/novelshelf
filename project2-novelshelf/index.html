@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovelShelf</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <div>
+            <h1>NovelShelf</h1>
+            <p>Browse novels, save your shelf, track progress, and write reviews.</p>
+        </div>
+        <nav class="nav">
+            <button class="nav-button active" data-page="store">Book Store</button>
+            <button class="nav-button" data-page="shelf">My Bookshelf</button>
+            <button class="nav-button" data-page="auth">Login</button>
+            <button id="sign-out-button" class="nav-button hidden">Logout</button>
+        </nav>
+    </header>
+
+    <main>
+        <section id="status" class="status"></section>
+
+        <section id="page-store" class="page active">
+            <div class="section-heading">
+                <div>
+                    <h2>Book Store</h2>
+                    <p>Discover novels and open a title to read chapters or reviews.</p>
+                </div>
+                <button id="refresh-store" class="secondary-button">Refresh</button>
+            </div>
+            <div id="novel-grid" class="novel-grid"></div>
+        </section>
+
+        <section id="page-detail" class="page">
+            <button class="text-button" data-page="store">&larr; Back to Book Store</button>
+            <div id="novel-detail" class="detail-layout"></div>
+        </section>
+
+        <section id="page-reader" class="page">
+            <button class="text-button" data-page="detail">&larr; Back to Novel Detail</button>
+            <article id="reader-view" class="reader-card"></article>
+        </section>
+
+        <section id="page-shelf" class="page">
+            <div class="section-heading">
+                <div>
+                    <h2>My Bookshelf</h2>
+                    <p>Continue reading saved novels and manage reading progress.</p>
+                </div>
+                <button id="refresh-shelf" class="secondary-button">Refresh</button>
+            </div>
+            <div id="shelf-list" class="shelf-list"></div>
+        </section>
+
+        <section id="page-auth" class="page">
+            <div class="auth-layout">
+                <form id="login-form" class="panel">
+                    <h2>Login</h2>
+                    <label>
+                        Email
+                        <input type="email" name="email" required>
+                    </label>
+                    <label>
+                        Password
+                        <input type="password" name="password" required>
+                    </label>
+                    <button type="submit">Login</button>
+                </form>
+
+                <form id="register-form" class="panel">
+                    <h2>Register</h2>
+                    <label>
+                        Email
+                        <input type="email" name="email" required>
+                    </label>
+                    <label>
+                        Password
+                        <input type="password" name="password" minlength="6" required>
+                    </label>
+                    <button type="submit">Create Account</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <span id="user-label">Not signed in</span>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
