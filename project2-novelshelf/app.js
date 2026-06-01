@@ -16,7 +16,8 @@ const state = {
     selectedChapter: null,
     chapters: [],
     reviews: [],
-    myShelf: []
+    myShelf: [],
+    editingReviewId: null
 };
 
 const pages = {
@@ -34,6 +35,10 @@ const readerView = document.querySelector('#reader-view');
 const shelfList = document.querySelector('#shelf-list');
 const userLabel = document.querySelector('#user-label');
 const signOutButton = document.querySelector('#sign-out-button');
+const totalNovelsLabel = document.querySelector('#total-novels');
+const shelfCountLabel = document.querySelector('#shelf-count');
+const searchInput = document.querySelector('#search-input');
+const categoryFilter = document.querySelector('#category-filter');
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -77,6 +82,8 @@ function bindButtons() {
     document.querySelector('#refresh-store').addEventListener('click', loadNovels);
     document.querySelector('#refresh-shelf').addEventListener('click', loadShelf);
     signOutButton.addEventListener('click', signOut);
+    searchInput.addEventListener('input', renderNovels);
+    categoryFilter.addEventListener('change', renderNovels);
 }
 
 function bindAuthForms() {
@@ -158,6 +165,7 @@ function updateAuthUI() {
         loginButton.classList.remove('hidden');
         signOutButton.classList.add('hidden');
         state.myShelf = [];
+        updateStats();
     }
 }
 
@@ -184,7 +192,22 @@ async function loadNovels() {
     }
 
     state.novels = data ?? [];
+    updateCategoryFilter();
+    updateStats();
     renderNovels();
+}
+
+function updateCategoryFilter() {
+    const selected = categoryFilter.value;
+    const categories = [...new Set(state.novels.map((novel) => novel.category))].sort();
+    categoryFilter.innerHTML = '<option value="">All categories</option>'
+        + categories.map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join('');
+    categoryFilter.value = categories.includes(selected) ? selected : '';
+}
+
+function updateStats() {
+    totalNovelsLabel.textContent = state.novels.length;
+    shelfCountLabel.textContent = state.myShelf.length;
 }
 
 function renderEmptyStore() {
@@ -197,12 +220,24 @@ function renderEmptyStore() {
 }
 
 function renderNovels() {
+    const query = searchInput.value.trim().toLowerCase();
+    const category = categoryFilter.value;
+    const visibleNovels = state.novels.filter((novel) => {
+        const haystack = `${novel.title} ${novel.author} ${novel.description}`.toLowerCase();
+        return (!query || haystack.includes(query)) && (!category || novel.category === category);
+    });
+
     if (!state.novels.length) {
         novelGrid.innerHTML = '<div class="panel">No novels found. Run the seed data in supabase-schema.sql.</div>';
         return;
     }
 
-    novelGrid.innerHTML = state.novels.map((novel) => `
+    if (!visibleNovels.length) {
+        novelGrid.innerHTML = '<div class="panel">No novels match this search.</div>';
+        return;
+    }
+
+    novelGrid.innerHTML = visibleNovels.map((novel) => `
         <article class="novel-card">
             <img src="${coverFor(novel)}" alt="${escapeHtml(novel.title)} cover">
             <div class="novel-card-body">
@@ -253,8 +288,8 @@ async function loadNovelDetail(novelId) {
 
 function renderNovelDetail() {
     const novel = state.selectedNovel;
-    const myReview = state.user
-        ? state.reviews.find((review) => review.user_id === state.user.id)
+    const editingReview = state.editingReviewId
+        ? state.reviews.find((review) => review.id === state.editingReviewId)
         : null;
 
     novelDetail.innerHTML = `
@@ -282,7 +317,7 @@ function renderNovelDetail() {
             </div>
 
             <h2>Reviews</h2>
-            ${renderReviewForm(myReview)}
+            ${renderReviewForm(editingReview)}
             <div class="review-list">
                 ${renderReviews()}
             </div>
@@ -304,32 +339,53 @@ function renderNovelDetail() {
 
     const deleteButton = novelDetail.querySelector('#delete-review');
     if (deleteButton) {
-        deleteButton.addEventListener('click', deleteReview);
+        deleteButton.addEventListener('click', () => deleteReview(deleteButton.dataset.reviewId));
     }
+
+    const cancelButton = novelDetail.querySelector('#cancel-edit-review');
+    if (cancelButton) {
+        cancelButton.addEventListener('click', () => {
+            state.editingReviewId = null;
+            renderNovelDetail();
+        });
+    }
+
+    novelDetail.querySelectorAll('[data-edit-review]').forEach((button) => {
+        button.addEventListener('click', () => {
+            state.editingReviewId = button.dataset.editReview;
+            renderNovelDetail();
+        });
+    });
+
+    novelDetail.querySelectorAll('[data-delete-review]').forEach((button) => {
+        button.addEventListener('click', () => deleteReview(button.dataset.deleteReview));
+    });
 }
 
-function renderReviewForm(myReview) {
+function renderReviewForm(editingReview) {
     if (!state.user) {
         return '<p class="notice">Log in to write a review.</p>';
     }
 
     return `
         <form id="review-form" class="review-form">
+            <h3>${editingReview ? 'Edit your review' : 'Add a review or follow-up'}</h3>
             <label>
                 Rating
                 <select name="rating" required>
                     ${[5, 4, 3, 2, 1].map((value) => `
-                        <option value="${value}" ${myReview?.rating === value ? 'selected' : ''}>${value}</option>
+                        <option value="${value}" ${editingReview?.rating === value ? 'selected' : ''}>${value}</option>
                     `).join('')}
                 </select>
             </label>
             <label>
                 Comment
-                <textarea name="comment" required>${escapeHtml(myReview?.comment ?? '')}</textarea>
+                <textarea name="comment" required>${escapeHtml(editingReview?.comment ?? '')}</textarea>
             </label>
             <div class="card-actions">
-                <button type="submit">${myReview ? 'Update Review' : 'Create Review'}</button>
-                ${myReview ? '<button type="button" id="delete-review" class="danger-button">Delete Review</button>' : ''}
+                <button type="submit">${editingReview ? 'Update Review' : 'Post Review'}</button>
+                ${editingReview ? `<button type="button" id="cancel-edit-review" class="secondary-button">Cancel Edit</button>` : ''}
+                ${editingReview ? `<button type="button" id="delete-review" class="danger-button" data-review-id="${editingReview.id}">Delete Review</button>` : ''}
             </div>
         </form>
     `;
@@ -342,9 +398,17 @@ function renderReviews() {
 
     return state.reviews.map((review) => `
         <div class="review-row">
-            <strong>Rating: ${review.rating}/5</strong>
+            <div class="review-meta">
+                <strong>Rating: ${review.rating}/5</strong>
+                <small>${review.user_id === state.user?.id ? 'Your review' : `Reader ${review.user_id.slice(0, 8)}`}</small>
+            </div>
             <p>${escapeHtml(review.comment)}</p>
-            <small>${review.user_id === state.user?.id ? 'Your review' : `User ${review.user_id.slice(0, 8)}`}</small>
+            ${review.user_id === state.user?.id ? `
+                <div class="card-actions">
+                    <button class="secondary-button" data-edit-review="${review.id}">Edit</button>
+                    <button class="danger-button" data-delete-review="${review.id}">Delete</button>
+                </div>
+            ` : ''}
         </div>
     `).join('');
 }
@@ -358,7 +422,9 @@ async function submitReview(event) {
     }
 
     const form = new FormData(event.currentTarget);
-    const existing = state.reviews.find((review) => review.user_id === state.user.id);
+    const existing = state.editingReviewId
+        ? state.reviews.find((review) => review.id === state.editingReviewId && review.user_id === state.user.id)
+        : null;
     const payload = {
         user_id: state.user.id,
         novel_id: state.selectedNovel.id,
@@ -376,12 +442,13 @@ async function submitReview(event) {
         return;
     }
 
+    state.editingReviewId = null;
     showStatus(existing ? 'Review updated.' : 'Review created.', 'success');
     await loadNovelDetail(state.selectedNovel.id);
 }
 
-async function deleteReview() {
-    const existing = state.reviews.find((review) => review.user_id === state.user?.id);
+async function deleteReview(reviewId) {
+    const existing = state.reviews.find((review) => review.id === reviewId && review.user_id === state.user?.id);
     if (!existing) {
         return;
     }
@@ -392,6 +459,7 @@ async function deleteReview() {
         return;
     }
 
+    state.editingReviewId = null;
     showStatus('Review deleted.', 'success');
     await loadNovelDetail(state.selectedNovel.id);
 }
@@ -442,6 +510,7 @@ async function fetchFirstChapter(novelId) {
 async function loadShelf() {
     if (!state.user || !isConfigured) {
         shelfList.innerHTML = '<div class="panel">Log in to view your bookshelf.</div>';
+        updateStats();
         return;
     }
 
@@ -465,6 +534,7 @@ async function loadShelf() {
     }
 
     state.myShelf = data ?? [];
+    updateStats();
     renderShelf();
 }
 
@@ -541,21 +611,54 @@ async function openReader(chapterId) {
 
     state.selectedChapter = data;
     state.selectedNovel = data.novels;
+    await loadChaptersForNovel(data.novel_id);
     renderReader();
     showPage('reader');
 }
 
+async function loadChaptersForNovel(novelId) {
+    const { data, error } = await client
+        .from('chapters')
+        .select('*')
+        .eq('novel_id', novelId)
+        .order('chapter_number');
+
+    if (!error) {
+        state.chapters = data ?? [];
+    }
+}
+
 function renderReader() {
     const chapter = state.selectedChapter;
+    const currentIndex = state.chapters.findIndex((item) => item.id === chapter.id);
+    const previousChapter = currentIndex > 0 ? state.chapters[currentIndex - 1] : null;
+    const nextChapter = currentIndex >= 0 && currentIndex < state.chapters.length - 1
+        ? state.chapters[currentIndex + 1]
+        : null;
+
     readerView.innerHTML = `
         <p class="tag">${escapeHtml(chapter.novels.title)}</p>
         <h2>${chapter.chapter_number}. ${escapeHtml(chapter.title)}</h2>
         <p class="chapter-content">${escapeHtml(chapter.content)}</p>
-        <button data-save-progress="${chapter.id}">Save This as Current Progress</button>
+        <div class="reader-actions">
+            <button class="secondary-button" data-reader-prev="${previousChapter?.id ?? ''}" ${previousChapter ? '' : 'disabled'}>Previous Chapter</button>
+            <button data-save-progress="${chapter.id}">Save This as Current Progress</button>
+            <button class="secondary-button" data-reader-next="${nextChapter?.id ?? ''}" ${nextChapter ? '' : 'disabled'}>Next Chapter</button>
+        </div>
     `;
 
     readerView.querySelector('[data-save-progress]').addEventListener('click', () => {
         saveProgress(chapter.novel_id, chapter.id);
+    });
+    readerView.querySelector('[data-reader-prev]').addEventListener('click', (event) => {
+        if (event.currentTarget.dataset.readerPrev) {
+            openReader(event.currentTarget.dataset.readerPrev);
+        }
+    });
+    readerView.querySelector('[data-reader-next]').addEventListener('click', (event) => {
+        if (event.currentTarget.dataset.readerNext) {
+            openReader(event.currentTarget.dataset.readerNext);
+        }
     });
 }
 

@@ -11,6 +11,11 @@
         <div>
             <h1>NovelShelf</h1>
             <p>Browse novels, save your shelf, track progress, and write reviews.</p>
+            <div class="hero-stats">
+                <span><strong id="total-novels">0</strong> novels</span>
+                <span><strong id="shelf-count">0</strong> saved</span>
+                <span>Supabase powered</span>
+            </div>
         </div>
         <nav class="nav">
             <button class="nav-button active" data-page="store">Book Store</button>
@@ -30,6 +35,18 @@
                     <p>Discover novels and open a title to read chapters or reviews.</p>
                 </div>
                 <button id="refresh-store" class="secondary-button">Refresh</button>
+            </div>
+            <div class="store-tools">
+                <label>
+                    Search
+                    <input id="search-input" type="search" placeholder="Search title, author, or description">
+                </label>
+                <label>
+                    Category
+                    <select id="category-filter">
+                        <option value="">All categories</option>
+                    </select>
+                </label>
             </div>
             <div id="novel-grid" class="novel-grid"></div>
         </section>
@@ -91,7 +108,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
-    <script src="app.js"></script>
+    <script src="config.js?v=4"></script>
+    <script src="app.js?v=4"></script>
 </body>
 </html>

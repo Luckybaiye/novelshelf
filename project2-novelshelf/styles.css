@@ -4,7 +4,7 @@
     --muted: #64748b;
     --line: #d7dee8;
     --panel: #ffffff;
-    --bg: #f4f7fb;
+    --bg: #eef4f8;
     --brand: #315c8c;
     --brand-strong: #24486f;
     --accent: #d9853b;
@@ -29,19 +29,42 @@ body {
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    padding: 24px 7vw;
-    background: #203348;
+    padding: 34px 7vw;
+    background:
+        linear-gradient(135deg, rgba(32, 51, 72, 0.96), rgba(36, 72, 111, 0.94)),
+        url("https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=1600&q=80");
+    background-position: center;
+    background-size: cover;
     color: #fff;
 }
 
 .topbar h1 {
     margin: 0 0 6px;
-    font-size: 32px;
+    font-size: 42px;
 }
 
 .topbar p {
     margin: 0;
     color: #d5dee9;
+}
+
+.hero-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.hero-stats span {
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    padding: 7px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+}
+
+.hero-stats strong {
+    color: #fff;
 }
 
 .nav {
@@ -171,6 +194,13 @@ main {
     gap: 18px;
 }
 
+.store-tools {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(180px, 260px);
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
 .novel-card,
 .panel,
 .reader-card,
@@ -184,6 +214,12 @@ main {
 
 .novel-card {
     overflow: hidden;
+    transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.novel-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 34px rgba(30, 41, 59, 0.12);
 }
 
 .novel-card img,
@@ -274,6 +310,16 @@ main {
     color: #334155;
     font-size: 18px;
     line-height: 1.8;
+    max-width: 78ch;
+}
+
+.reader-actions,
+.review-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .auth-layout {
@@ -354,7 +400,8 @@ footer {
     }
 
     .detail-layout,
-    .shelf-item {
+    .shelf-item,
+    .store-tools {
         grid-template-columns: 1fr;
     }
 

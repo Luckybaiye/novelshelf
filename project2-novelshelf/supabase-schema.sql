@@ -45,8 +45,7 @@ create table reviews (
     rating integer not null check (rating between 1 and 5),
     comment text not null,
     created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now(),
-    unique (user_id, novel_id)
+    updated_at timestamptz not null default now()
 );
 
 alter table novels enable row level security;
@@ -122,6 +121,16 @@ select id, 2, 'Chapter 2: Cloud Street',
 from novels where title = 'Mist Harbor Academy';
 
 insert into chapters (novel_id, chapter_number, title, content)
+select id, 3, 'Chapter 3: The Bell Tower Oath',
+'Nora followed the sound of bells to a tower with no staircase. The students waiting there wore blue coats and spoke as if they had known her name for years.'
+from novels where title = 'Mist Harbor Academy';
+
+insert into chapters (novel_id, chapter_number, title, content)
+select id, 4, 'Chapter 4: Map of Unwritten Rooms',
+'The map changed whenever Nora blinked. One room appeared only when she admitted she was afraid, and inside it waited a desk carved with her initials.'
+from novels where title = 'Mist Harbor Academy';
+
+insert into chapters (novel_id, chapter_number, title, content)
 select id, 1, 'Chapter 1: Signal After Midnight',
 'The telescope app was supposed to chart stars. At 12:07 a.m., it displayed a message instead: Do not go to the physics building tomorrow.'
 from novels where title = 'After Class, We Hunt Stars';
@@ -132,6 +141,16 @@ select id, 2, 'Chapter 2: A Future Problem',
 from novels where title = 'After Class, We Hunt Stars';
 
 insert into chapters (novel_id, chapter_number, title, content)
+select id, 3, 'Chapter 3: The Observatory Key',
+'The key was taped beneath the oldest telescope. It opened a cabinet full of printed star charts, each one marked with tomorrow''s date.'
+from novels where title = 'After Class, We Hunt Stars';
+
+insert into chapters (novel_id, chapter_number, title, content)
+select id, 4, 'Chapter 4: Message Queue',
+'By morning, the app had received twenty-seven warnings. Some were tiny, some impossible, and one simply said: Trust the quietest person in the room.'
+from novels where title = 'After Class, We Hunt Stars';
+
+insert into chapters (novel_id, chapter_number, title, content)
 select id, 1, 'Chapter 1: Jasmine and Footprints',
 'The first clue was a line of wet footprints crossing the tea shop floor, even though no customer had entered since noon.'
 from novels where title = 'The Tea Shop Detective';
@@ -139,4 +158,14 @@ from novels where title = 'The Tea Shop Detective';
 insert into chapters (novel_id, chapter_number, title, content)
 select id, 2, 'Chapter 2: The Missing Notebook',
 'By sunset, Mina had three suspects, two cups of cold jasmine tea, and one notebook that everyone claimed they had never seen.'
+from novels where title = 'The Tea Shop Detective';
+
+insert into chapters (novel_id, chapter_number, title, content)
+select id, 3, 'Chapter 3: Steam on the Window',
+'A name appeared in the steam on the front window. Mina copied it down before the letters vanished, then realized the handwriting matched her own.'
+from novels where title = 'The Tea Shop Detective';
+
+insert into chapters (novel_id, chapter_number, title, content)
+select id, 4, 'Chapter 4: The Receipt Drawer',
+'The receipt drawer held orders from customers who had never visited. Each receipt ended with the same table number, though the tea shop had only six tables.'
 from novels where title = 'The Tea Shop Detective';
