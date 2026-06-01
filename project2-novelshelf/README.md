@@ -83,3 +83,5 @@ http://127.0.0.1:8000
 - `styles.css`: app styling
 - `app.js`: Supabase queries and UI logic
 - `config.js`: Supabase project configuration
+
+This version improves the authentication flow with an Account page, password updates, logout, and clearer feedback.
