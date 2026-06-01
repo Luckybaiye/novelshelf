@@ -10,11 +10,11 @@ Target length: 5 minutes.
 ## 2. Live Demo - 2 minutes
 
 - Register or log in with Supabase Auth.
-- Browse the Book Store.
+- Browse, search, and filter the Book Store.
 - Open a novel detail page.
 - Add a novel to My Bookshelf.
-- Open a chapter and save reading progress.
-- Create, edit, and delete a review.
+- Open a chapter, use previous/next chapter controls, and save reading progress.
+- Create multiple reviews or follow-up comments, edit one, and delete one.
 - Remove a novel from My Bookshelf.
 
 ## 3. Database and Supabase - 45 seconds
