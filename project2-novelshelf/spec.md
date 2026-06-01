@@ -10,7 +10,8 @@ The target users are college students and casual web-novel readers who want a si
 
 ## Core Pages
 
-- **Login / Register:** Users sign up and sign in with Supabase Auth.
+- **Login / Register:** Users sign up and sign in with Supabase Auth through one tabbed auth card.
+- **Account:** Signed-in users view their email, update their password, open their bookshelf, or log out.
 - **Book Store:** Users browse all available novels.
 - **Search and Filter:** Users search novels by title, author, or description and filter by category.
 - **Novel Detail:** Users view a novel description, chapters, and reviews.
@@ -68,10 +69,11 @@ The target users are college students and casual web-novel readers who want a si
 
 ## User Flows
 
-1. **Register and browse:** A new user registers with email and password, logs in, opens the Book Store, and browses available novels.
-2. **Save and continue reading:** A logged-in user opens a novel detail page, adds it to My Bookshelf, reads a chapter, and updates reading progress.
-3. **Review CRUD:** A logged-in user creates a review for a novel, views it on the detail page, edits the rating/comment, and deletes the review.
-4. **Bookshelf CRUD:** A logged-in user adds a novel to the bookshelf, views saved novels, updates the current chapter, and removes the novel from the bookshelf.
+1. **Register and browse:** A new user registers with email and password, logs in, is sent to the Account page, then opens the Book Store and browses available novels.
+2. **Account management:** A signed-in user views their account email, updates their password, receives toast and inline feedback, and logs out when finished.
+3. **Save and continue reading:** A logged-in user opens a novel detail page, adds it to My Bookshelf, reads a chapter, and updates reading progress.
+4. **Review CRUD:** A logged-in user creates a review for a novel, views it on the detail page, edits the rating/comment, and deletes the review.
+5. **Bookshelf CRUD:** A logged-in user adds a novel to the bookshelf, views saved novels, updates the current chapter, and removes the novel from the bookshelf.
 
 ## CRUD Requirement Coverage
 
@@ -83,6 +85,13 @@ The app supports full CRUD on `reviews`:
 - **Delete:** Delete any review created by the current user.
 
 Users can also add multiple reviews or follow-up comments for the same novel, which supports a "read more, add more thoughts later" workflow.
+
+The app also supports Supabase Auth account actions:
+
+- **Register:** Create an account with email and password.
+- **Login:** Sign in and redirect directly to the Account page.
+- **Update password:** Change the signed-in user's password from the Account page.
+- **Logout:** End the session from the top navigation or Account page.
 
 The app also supports CRUD-like bookshelf management:
 
