@@ -43,7 +43,7 @@ Because this is a static frontend, you can run it with any simple local server.
 Using Python:
 
 ```powershell
-python -m http.server 8000
+python -m http.server 8080
 ```
 
 Then open:
