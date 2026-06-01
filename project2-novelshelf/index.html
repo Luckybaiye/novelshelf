@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NovelShelf</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
     <header class="topbar">
@@ -20,6 +20,7 @@
         <nav class="nav">
             <button class="nav-button active" data-page="store">Book Store</button>
             <button class="nav-button" data-page="shelf">My Bookshelf</button>
+            <button id="account-button" class="nav-button hidden" data-page="account">Account</button>
             <button class="nav-button" data-page="auth">Login</button>
             <button id="sign-out-button" class="nav-button hidden">Logout</button>
         </nav>
@@ -27,6 +28,7 @@
 
     <main>
         <section id="status" class="status"></section>
+        <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
 
         <section id="page-store" class="page active">
             <div class="section-heading">
@@ -74,30 +76,64 @@
 
         <section id="page-auth" class="page">
             <div class="auth-layout">
-                <form id="login-form" class="panel">
-                    <h2>Login</h2>
-                    <label>
-                        Email
-                        <input type="email" name="email" required>
-                    </label>
-                    <label>
-                        Password
-                        <input type="password" name="password" required>
-                    </label>
-                    <button type="submit">Login</button>
-                </form>
+                <div class="auth-card panel">
+                    <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
+                        <button id="login-tab" class="auth-tab active" type="button" data-auth-mode="login">Login</button>
+                        <button id="register-tab" class="auth-tab" type="button" data-auth-mode="register">Register</button>
+                    </div>
 
-                <form id="register-form" class="panel">
-                    <h2>Register</h2>
+                    <form id="login-form" class="auth-form">
+                        <h2>Welcome back</h2>
+                        <label>
+                            Email
+                            <input type="email" name="email" required>
+                        </label>
+                        <label>
+                            Password
+                            <input type="password" name="password" required>
+                        </label>
+                        <button type="submit">Login</button>
+                        <p class="auth-switch">Don't have an account? <button type="button" class="link-button" data-auth-mode="register">Create one</button></p>
+                    </form>
+
+                    <form id="register-form" class="auth-form hidden">
+                        <h2>Create your account</h2>
+                        <label>
+                            Email
+                            <input type="email" name="email" required>
+                        </label>
+                        <label>
+                            Password
+                            <input type="password" name="password" minlength="6" required>
+                        </label>
+                        <button type="submit">Create Account</button>
+                        <p class="auth-switch">Already have an account? <button type="button" class="link-button" data-auth-mode="login">Log in</button></p>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section id="page-account" class="page">
+            <div class="account-layout">
+                <div class="panel account-card">
+                    <span class="tag">Account</span>
+                    <h2>Your Reader Profile</h2>
+                    <p id="account-email">Signed in email will appear here.</p>
+                    <p class="muted">Manage your NovelShelf account and update your password.</p>
+                    <div class="card-actions">
+                        <button class="secondary-button" data-page="shelf">Open My Bookshelf</button>
+                        <button id="account-sign-out" class="danger-button">Logout</button>
+                    </div>
+                </div>
+
+                <form id="password-form" class="panel account-card">
+                    <h2>Change Password</h2>
                     <label>
-                        Email
-                        <input type="email" name="email" required>
-                    </label>
-                    <label>
-                        Password
+                        New Password
                         <input type="password" name="password" minlength="6" required>
                     </label>
-                    <button type="submit">Create Account</button>
+                    <p id="password-feedback" class="form-feedback" aria-live="polite"></p>
+                    <button type="submit">Update Password</button>
                 </form>
             </div>
         </section>
@@ -108,7 +144,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js?v=4"></script>
-    <script src="app.js?v=4"></script>
+    <script src="config.js?v=11"></script>
+    <script src="app.js?v=11"></script>
 </body>
 </html>
