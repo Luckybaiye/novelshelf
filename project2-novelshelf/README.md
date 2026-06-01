@@ -49,7 +49,7 @@ python -m http.server 8000
 Then open:
 
 ```text
-http://127.0.0.1:8000
+http://127.0.0.1:8080
 ```
 
 ## Demo Checklist
