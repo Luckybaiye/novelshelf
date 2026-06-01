@@ -10,6 +10,10 @@ Target length: 5 minutes.
 ## 2. Live Demo - 2 minutes
 
 - Register or log in with Supabase Auth.
+- Show the unified Login/Register tab card.
+- Log in and show the automatic redirect to the Account page.
+- Update a password from the Account page and point out the toast/inline feedback.
+- Log out from the Account page or top navigation.
 - Browse, search, and filter the Book Store.
 - Open a novel detail page.
 - Add a novel to My Bookshelf.
@@ -33,4 +37,4 @@ Target length: 5 minutes.
 ## 5. Reflection - 30 seconds
 
 - Supabase made auth and hosted PostgreSQL faster than building a backend from scratch.
-- The hardest part was coordinating frontend state with live database records and user-specific row-level security.
+- The hardest part was coordinating frontend state with live database records, user-specific row-level security, and a smooth login/logout experience.
