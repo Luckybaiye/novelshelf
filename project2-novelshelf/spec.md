@@ -12,6 +12,7 @@ The target users are college students and casual web-novel readers who want a si
 
 - **Login / Register:** Users sign up and sign in with Supabase Auth.
 - **Book Store:** Users browse all available novels.
+- **Search and Filter:** Users search novels by title, author, or description and filter by category.
 - **Novel Detail:** Users view a novel description, chapters, and reviews.
 - **Reader:** Users read a selected chapter and update their reading progress.
 - **My Bookshelf:** Users view saved novels, continue reading, update progress, or remove a novel.
@@ -78,8 +79,10 @@ The app supports full CRUD on `reviews`:
 
 - **Create:** Add a review on the novel detail page.
 - **Read:** Display reviews for each novel.
-- **Update:** Edit the current user's review.
-- **Delete:** Delete the current user's review.
+- **Update:** Edit any review created by the current user.
+- **Delete:** Delete any review created by the current user.
+
+Users can also add multiple reviews or follow-up comments for the same novel, which supports a "read more, add more thoughts later" workflow.
 
 The app also supports CRUD-like bookshelf management:
 
