@@ -17,7 +17,9 @@ const state = {
     chapters: [],
     reviews: [],
     myShelf: [],
-    editingReviewId: null
+    editingReviewId: null,
+    authMode: 'login',
+    lastSubmittedPassword: null
 };
 
 const pages = {
@@ -25,10 +27,12 @@ const pages = {
     detail: document.querySelector('#page-detail'),
     reader: document.querySelector('#page-reader'),
     shelf: document.querySelector('#page-shelf'),
-    auth: document.querySelector('#page-auth')
+    auth: document.querySelector('#page-auth'),
+    account: document.querySelector('#page-account')
 };
 
 const statusBox = document.querySelector('#status');
+const toastRegion = document.querySelector('#toast-region');
 const novelGrid = document.querySelector('#novel-grid');
 const novelDetail = document.querySelector('#novel-detail');
 const readerView = document.querySelector('#reader-view');
@@ -39,6 +43,11 @@ const totalNovelsLabel = document.querySelector('#total-novels');
 const shelfCountLabel = document.querySelector('#shelf-count');
 const searchInput = document.querySelector('#search-input');
 const categoryFilter = document.querySelector('#category-filter');
+const accountButton = document.querySelector('#account-button');
+const accountEmail = document.querySelector('#account-email');
+const accountSignOutButton = document.querySelector('#account-sign-out');
+const passwordInput = document.querySelector('#password-form input[name="password"]');
+const passwordFeedback = document.querySelector('#password-feedback');
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -57,12 +66,17 @@ async function init() {
     state.user = data.session?.user ?? null;
     updateAuthUI();
 
-    client.auth.onAuthStateChange((_event, session) => {
+    client.auth.onAuthStateChange((event, session) => {
         state.user = session?.user ?? null;
         updateAuthUI();
         loadShelf();
         if (state.selectedNovel) {
             loadNovelDetail(state.selectedNovel.id);
+        }
+        if (state.user && (event === 'SIGNED_IN' || pages.auth.classList.contains('active'))) {
+            clearAuthForms();
+            showStatus('');
+            openAccountPage();
         }
     });
 
@@ -74,7 +88,12 @@ async function init() {
 
 function bindNavigation() {
     document.querySelectorAll('[data-page]').forEach((button) => {
-        button.addEventListener('click', () => showPage(button.dataset.page));
+        button.addEventListener('click', () => {
+            if (button.dataset.page === 'auth') {
+                setAuthMode('login');
+            }
+            showPage(button.dataset.page);
+        });
     });
 }
 
@@ -82,8 +101,12 @@ function bindButtons() {
     document.querySelector('#refresh-store').addEventListener('click', loadNovels);
     document.querySelector('#refresh-shelf').addEventListener('click', loadShelf);
     signOutButton.addEventListener('click', signOut);
+    accountSignOutButton.addEventListener('click', signOut);
     searchInput.addEventListener('input', renderNovels);
     categoryFilter.addEventListener('change', renderNovels);
+    document.querySelectorAll('[data-auth-mode]').forEach((button) => {
+        button.addEventListener('click', () => setAuthMode(button.dataset.authMode));
+    });
 }
 
 function bindAuthForms() {
@@ -92,17 +115,21 @@ function bindAuthForms() {
         if (!requireSupabase()) {
             return;
         }
+        showStatus('');
         const form = new FormData(event.currentTarget);
         const email = form.get('email');
         const password = form.get('password');
-        const { error } = await client.auth.signInWithPassword({ email, password });
+        const { data, error } = await client.auth.signInWithPassword({ email, password });
         if (error) {
             showStatus(error.message, 'error');
             return;
         }
+        state.user = data.user ?? data.session?.user ?? null;
+        updateAuthUI();
+        clearAuthForms();
+        openAccountPage();
         showStatus('Logged in successfully.', 'success');
-        event.currentTarget.reset();
-        showPage('store');
+        refreshCurrentUser().catch(() => updateAuthUI());
     });
 
     document.querySelector('#register-form').addEventListener('submit', async (event) => {
@@ -113,14 +140,121 @@ function bindAuthForms() {
         const form = new FormData(event.currentTarget);
         const email = form.get('email');
         const password = form.get('password');
-        const { error } = await client.auth.signUp({ email, password });
+        const { data, error } = await client.auth.signUp({ email, password });
         if (error) {
-            showStatus(error.message, 'error');
+            const message = error.message.toLowerCase().includes('already')
+                ? 'This email is already registered. Please log in instead.'
+                : error.message;
+            showStatus(message, 'error');
             return;
         }
-        showStatus('Account created. Check your email if confirmation is enabled, then log in.', 'success');
-        event.currentTarget.reset();
+
+        if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+            showStatus('This email is already registered. Please log in instead.', 'error');
+            setAuthMode('login');
+            return;
+        }
+
+        showStatus('Account created. You can now use NovelShelf.', 'success');
+        clearAuthForms();
+        if (data.session) {
+            state.user = data.session.user;
+            updateAuthUI();
+            openAccountPage();
+        } else {
+            setAuthMode('login');
+        }
     });
+
+    document.querySelector('#password-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!state.user) {
+            showStatus('Please log in before changing your password.', 'error');
+            showPage('auth');
+            return;
+        }
+
+        const formElement = event.currentTarget;
+        const submitButton = formElement.querySelector('button[type="submit"]');
+        const form = new FormData(formElement);
+        const password = form.get('password');
+        if (state.lastSubmittedPassword && password === state.lastSubmittedPassword) {
+            setPasswordFeedback('Please choose a password different from the last submitted one.', 'error');
+            showStatus('Please choose a new password different from the last submitted password.', 'error');
+            return;
+        }
+
+        setPasswordFeedback('Updating password...', 'info');
+        showStatus('Updating password...', 'info');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Updating...';
+
+        try {
+            const { error } = await withTimeout(
+                client.auth.updateUser({ password }),
+                12000,
+                'Password update timed out. Please check your connection and try again.'
+            );
+            if (error) {
+                setPasswordFeedback(error.message, 'error');
+                showStatus(error.message, 'error');
+                return;
+            }
+
+            state.lastSubmittedPassword = password;
+            clearForm(formElement);
+            setPasswordFeedback('Password updated successfully.', 'success');
+            showStatus('Password updated successfully.', 'success');
+        } catch (error) {
+            setPasswordFeedback(error.message, 'error');
+            showStatus(error.message, 'error');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Update Password';
+        }
+    });
+
+    passwordInput.addEventListener('input', () => {
+        const statusText = statusBox.textContent.toLowerCase();
+        if (statusText.includes('password') || statusText.includes('updating')) {
+            showStatus('');
+        }
+        setPasswordFeedback('', 'info');
+    });
+}
+
+function setAuthMode(mode) {
+    state.authMode = mode === 'register' ? 'register' : 'login';
+    document.querySelector('#login-form').classList.toggle('hidden', state.authMode !== 'login');
+    document.querySelector('#register-form').classList.toggle('hidden', state.authMode !== 'register');
+    document.querySelector('#login-tab').classList.toggle('active', state.authMode === 'login');
+    document.querySelector('#register-tab').classList.toggle('active', state.authMode === 'register');
+}
+
+function setPasswordFeedback(message, type = 'info') {
+    passwordFeedback.textContent = message;
+    passwordFeedback.className = `form-feedback ${message ? type : ''}`;
+}
+
+function clearForm(form) {
+    form.reset();
+    form.querySelectorAll('input, textarea').forEach((input) => {
+        input.value = '';
+    });
+}
+
+function clearAuthForms() {
+    clearForm(document.querySelector('#login-form'));
+    clearForm(document.querySelector('#register-form'));
+}
+
+function withTimeout(promise, milliseconds, message) {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => {
+            window.setTimeout(() => reject(new Error(message)), milliseconds);
+        })
+    ]);
 }
 
 function requireSupabase() {
@@ -132,9 +266,13 @@ function requireSupabase() {
 }
 
 function showPage(name) {
-    if ((name === 'shelf' || name === 'reader') && !state.user) {
+    if ((name === 'shelf' || name === 'reader' || name === 'account') && !state.user) {
         showStatus('Please log in before opening that page.', 'error');
         name = 'auth';
+        setAuthMode('login');
+    }
+    if (name === 'auth' && state.user) {
+        name = 'account';
     }
 
     Object.entries(pages).forEach(([pageName, section]) => {
@@ -152,17 +290,57 @@ function showStatus(message, type = 'info') {
         return;
     }
     statusBox.innerHTML = `<div class="notice ${type}">${escapeHtml(message)}</div>`;
+    showToast(message, type);
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icon = type === 'success' ? '✓' : type === 'error' ? '!' : 'i';
+    toast.innerHTML = `
+        <strong class="toast-icon">${icon}</strong>
+        <span>${escapeHtml(message)}</span>
+        <button type="button" class="toast-close" aria-label="Dismiss notification">&times;</button>
+    `;
+    toastRegion.appendChild(toast);
+
+    const removeToast = () => {
+        toast.classList.add('leaving');
+        window.setTimeout(() => toast.remove(), 220);
+    };
+
+    toast.querySelector('.toast-close').addEventListener('click', removeToast);
+    window.setTimeout(removeToast, 4200);
+}
+
+async function refreshCurrentUser() {
+    const { data } = await client.auth.getUser();
+    state.user = data.user ?? state.user;
+    updateAuthUI();
+}
+
+function openAccountPage() {
+    if (!state.user) {
+        showPage('auth');
+        return;
+    }
+    updateAuthUI();
+    showPage('account');
 }
 
 function updateAuthUI() {
     const loginButton = document.querySelector('.nav-button[data-page="auth"]');
     if (state.user) {
         userLabel.textContent = `Signed in as ${state.user.email}`;
+        accountEmail.textContent = state.user.email;
         loginButton.classList.add('hidden');
+        accountButton.classList.remove('hidden');
         signOutButton.classList.remove('hidden');
     } else {
         userLabel.textContent = 'Not signed in';
+        accountEmail.textContent = 'Signed in email will appear here.';
         loginButton.classList.remove('hidden');
+        accountButton.classList.add('hidden');
         signOutButton.classList.add('hidden');
         state.myShelf = [];
         updateStats();
@@ -175,8 +353,12 @@ async function signOut() {
         showStatus(error.message, 'error');
         return;
     }
+    state.user = null;
+    state.myShelf = [];
+    updateAuthUI();
+    setAuthMode('login');
     showStatus('Logged out successfully.', 'success');
-    showPage('store');
+    showPage('auth');
 }
 
 async function loadNovels() {
